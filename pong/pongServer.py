@@ -20,9 +20,9 @@ import threading
 # from clients. Don't care if they cheat. 
 
 
-def startServer(port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
+def startServer(ip: str, port, errorLabel:tk.Label, app:tk.Tk) -> None:
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
+    server.bind((ip, port))
 
 
 
