@@ -23,6 +23,8 @@ import threading
 def startServer(ip: str, port, errorLabel:tk.Label, app:tk.Tk) -> None:
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((ip, port))
+    # do .listen()
+    # https://realpython.com/python-sockets/#echo-client-and-server
 
 
 
