@@ -1,7 +1,7 @@
 # =================================================================================================
-# Contributing Authors:	    <Anyone who touched the code>
-# Email Addresses:          <Your uky.edu email addresses>
-# Date:                     <The date the file was last edited>
+# Contributing Authors:	    Roshan Shrestha
+# Email Addresses:          rsh251@uky.edu
+# Date:                     11/03/20
 # Purpose:                  <How this file contributes to the project>
 # Misc:                     <Not Required.  Anything else you might want to include>
 # =================================================================================================
@@ -17,7 +17,7 @@ from assets.code.helperCode import *
 # where you should add to the code are marked.  Feel free to change any part of this project
 # to suit your needs.
 def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.socket) -> None:
-    
+
     # Pygame inits
     pygame.mixer.pre_init(44100, -16, 2, 2048)
     pygame.init()
@@ -54,8 +54,8 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         opponentPaddleObj = leftPaddle
         playerPaddleObj = rightPaddle
 
-    lScore = 0
-    rScore = 0
+    leftScore = 0
+    rightScore = 0
 
     sync = 0
 
@@ -82,8 +82,16 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # Your code here to send an update to the server on your paddle's information,
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
-        
-        
+
+        data = {'sync': sync,   # Assemble the Json dictionary
+            'paddle': [playerPaddleObj.rect.x, playerPaddleObj.rect.y],
+            'ball': [ball.rect.x, ball.rect.y],
+            'score': [leftScore, rightScore]}
+
+        jsonData = json.dumps(data) # Dump the data
+        client.send(jsonData.encode()) # Send the data
+
+
         # =========================================================================================
 
         # Update the player paddle and opponent paddle's location on the screen
@@ -96,8 +104,8 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                     paddle.rect.y -= paddle.speed
 
         # If the game is over, display the win message
-        if lScore > 4 or rScore > 4:
-            winText = "Player 1 Wins! " if lScore > 4 else "Player 2 Wins! "
+        if leftScore > 4 or rightScore > 4:
+            winText = "Player 1 Wins! " if leftScore > 4 else "Player 2 Wins! "
             textSurface = winFont.render(winText, False, WHITE, (0,0,0))
             textRect = textSurface.get_rect()
             textRect.center = ((screenWidth/2), screenHeight/2)
@@ -109,14 +117,14 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
             # If the ball makes it past the edge of the screen, update score, etc.
             if ball.rect.x > screenWidth:
-                lScore += 1
+                leftScore += 1
                 pointSound.play()
                 ball.reset(nowGoing="left")
             elif ball.rect.x < 0:
-                rScore += 1
+                rightScore += 1
                 pointSound.play()
                 ball.reset(nowGoing="right")
-                
+
             # If the ball hits a paddle
             if ball.rect.colliderect(playerPaddleObj.rect):
                 bounceSound.play()
@@ -124,29 +132,29 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
             elif ball.rect.colliderect(opponentPaddleObj.rect):
                 bounceSound.play()
                 ball.hitPaddle(opponentPaddleObj.rect.center[1])
-                
+
             # If the ball hits a wall
             if ball.rect.colliderect(topWall) or ball.rect.colliderect(bottomWall):
                 bounceSound.play()
                 ball.hitWall()
-            
+
             pygame.draw.rect(screen, WHITE, ball)
             # ==== End Ball Logic =================================================================
 
         # Drawing the dotted line in the center
         for i in centerLine:
             pygame.draw.rect(screen, WHITE, i)
-        
+
         # Drawing the player's new location
         for paddle in [playerPaddleObj, opponentPaddleObj]:
             pygame.draw.rect(screen, WHITE, paddle)
 
         pygame.draw.rect(screen, WHITE, topWall)
         pygame.draw.rect(screen, WHITE, bottomWall)
-        updateScore(lScore, rScore, screen, WHITE, scoreFont)
+        updateScore(leftScore, rightScore, screen, WHITE, scoreFont)
         pygame.display.flip()
         clock.tick(60)
-        
+
         # This number should be synchronized between you and your opponent.  If your number is larger
         # then you are ahead of them in time, if theirs is larger, they are ahead of you, and you need to
         # catch up (use their info)
@@ -154,6 +162,31 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # =========================================================================================
         # Send your server update here at the end of the game loop to sync your game with your
         # opponent's game
+
+
+         #Recieve game state from client
+        recieved = client.recv(1024) # socket data receive
+        data = recieved.decode()    # socket data decode
+        jsonData = json.loads(data) # Parse Json data
+
+        #Update  paddle position
+        if playerPaddle == "left":
+            paddle.rect.x = jsonData['left'][0]
+            paddle.rect.y = jsonData['left'][1]
+        else:
+            paddle.rect.x = jsonData['right'][0]
+            paddle.rect.y = jsonData['right'][1]
+
+        #update sync variable
+        sync = jsonData['sync']
+
+        #Update ball position
+        ball.rect.x = jsonData['ball'][0]
+        ball.rect.y = jsonData['ball'][1]
+
+        # Update  scores
+        leftScore = jsonData['score'][0]
+        rightScore = jsonData['score'][1]
 
         # =========================================================================================
 
@@ -171,29 +204,46 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # port          A string holding the port the server is using
     # errorLabel    A tk label widget, modify it's text to display messages to the user (example below)
     # app           The tk window object, needed to kill the window
-    
+
     # Create a socket and connect to the server
     # You don't have to use SOCK_STREAM, use what you think is best
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect(("127.0.0.1", port))
+
+
 
     # Get the required information from your server (screen width, height & player paddle, "left or "right)
+    recieved = client.recv(1024)
+    data = recieved.decode()
+    jsonData = json.loads(data)
 
+    side = jsonData['side']
+    screenHeight = jsonData['height']
+    screenWidth = jsonData['width']
 
     # If you have messages you'd like to show the user use the errorLabel widget like so
     errorLabel.config(text=f"Some update text. You input: IP: {ip}, Port: {port}")
     # You may or may not need to call this, depending on how many times you update the label
-    errorLabel.update()     
+    errorLabel.update()
 
     # Close this window and start the game with the info passed to you from the server
-    #app.withdraw()     # Hides the window (we'll kill it later)
-    #playGame(screenWidth, screenHeight, ("left"|"right"), client)  # User will be either left or right paddle
-    #app.quit()         # Kills the window
+    app.withdraw()     # Hides the window (we'll kill it later)
+    playGame(screenWidth, screenHeight, side, client)  # User will be either left or right paddle
+    app.quit()         # Kills the window
 
 
 # This displays the opening screen, you don't need to edit this (but may if you like)
 def startScreen():
     app = tk.Tk()
     app.title("Server Info")
+
+    script_directory = os.path.dirname(__file__)
+
+    # Define the relative path to the image file
+    relative_image_path = os.path.join("assets", "images", "logo.png")
+    image_path = os.path.join(script_directory, relative_image_path)
+
+
 
     image = tk.PhotoImage(file="./assets/images/logo.png")
 
@@ -222,7 +272,7 @@ def startScreen():
 
 if __name__ == "__main__":
     startScreen()
-    
+
     # Uncomment the line below if you want to play the game without a server to see how it should work
     # the startScreen() function should call playGame with the arguments given to it by the server this is
     # here for demo purposes only
