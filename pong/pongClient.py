@@ -83,13 +83,20 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
 
-        data = {'sync': sync,   # Assemble the Json dictionary
-            'paddle': [playerPaddleObj.rect.x, playerPaddleObj.rect.y],
-            'ball': [ball.rect.x, ball.rect.y],
-            'score': [lScore, rScore]}
+        # Create a JSON dictionary with game data
+        data = {
+            'sync': sync,  # Synchronization value
+            'paddle': [playerPaddleObj.rect.x, playerPaddleObj.rect.y],  # Paddle position [x, y]
+            'ball': [ball.rect.x, ball.rect.y],  # Ball position [x, y]
+            'score': [lScore, rScore]  # Scores for left and right players
+        }
 
-        jsonData = json.dumps(data) # Dump the data
-        client.send(jsonData.encode()) # Send the data
+        # Serialize the data to a JSON-formatted string
+        jsonData = json.dumps(data)
+
+        # Send the serialized data to the server
+        client.send(jsonData.encode())
+
 
 
         # =========================================================================================
@@ -163,31 +170,37 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # Send your server update here at the end of the game loop to sync your game with your
         # opponent's game
 
+        
+        getInfoOpponent = {
+            "request": "getPaddleOpponent"
+        }
 
-         #Recieve game state from client
-        recieved = client.recv(1024) # socket data receive
-        data = recieved.decode()    # socket data decode
-        jsonData = json.loads(data) # Parse Json data
 
-        #Update  paddle position
-        if playerPaddle == "left":
-            paddle.rect.x = jsonData['left'][0]
-            paddle.rect.y = jsonData['left'][1]
+        request_data = json.dumps(getInfoOpponent)
+
+        client.send(request_data.encode())
+
+        response_data = client.recv(1024)
+
+
+        response_dict = json.loads(response_data.decode())
+
+        # Deserialize the response data to a Python dictionary
+        response_dict = json.loads(response_data.decode('utf-8'))
+
+        # Extract the opponent's paddle position from the response
+        opponent_paddle_pos = response_dict.get("opponent_y", "Unknown")
+
+        # Check if the opponent's paddle position is known
+        if opponent_paddle_pos != "Unknown":
+            # Update the local representation of the opponent's paddle position
+            opponentPaddleObj.rect.y = opponent_paddle_pos
         else:
-            paddle.rect.x = jsonData['right'][0]
-            paddle.rect.y = jsonData['right'][1]
-
-        #update sync variable
-        sync = jsonData['sync']
-
-        #Update ball position
-        ball.rect.x = jsonData['ball'][0]
-        ball.rect.y = jsonData['ball'][1]
-
-        # Update  scores
-        lScore = jsonData['score'][0]
-        rScore = jsonData['score'][1]
-
+            # Handle the case where the opponent's paddle position is unknown
+            errText = f"Error in receiving opponent paddle info! Unknown position"
+            textSurface = winFont.render(errText, False, (255, 0, 0), (0, 0, 0))
+            textRect = textSurface.get_rect()
+            textRect.center = ((screenWidth / 2), screenHeight / 2)
         # =========================================================================================
 
 
