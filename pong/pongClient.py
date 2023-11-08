@@ -2,7 +2,7 @@
 # Contributing Authors:	    Roshan Shrestha
 # Email Addresses:          rsh251@uky.edu
 # Date:                     11/03/20
-# Purpose:                  <How this file contributes to the project>
+# Purpose:                  To handle the client side of the game
 # Misc:                     <Not Required.  Anything else you might want to include>
 # =================================================================================================
 
@@ -54,8 +54,8 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         opponentPaddleObj = leftPaddle
         playerPaddleObj = rightPaddle
 
-    leftScore = 0
-    rightScore = 0
+    lScore = 0
+    rScore = 0
 
     sync = 0
 
@@ -86,7 +86,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         data = {'sync': sync,   # Assemble the Json dictionary
             'paddle': [playerPaddleObj.rect.x, playerPaddleObj.rect.y],
             'ball': [ball.rect.x, ball.rect.y],
-            'score': [leftScore, rightScore]}
+            'score': [lScore, rScore]}
 
         jsonData = json.dumps(data) # Dump the data
         client.send(jsonData.encode()) # Send the data
@@ -104,8 +104,8 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                     paddle.rect.y -= paddle.speed
 
         # If the game is over, display the win message
-        if leftScore > 4 or rightScore > 4:
-            winText = "Player 1 Wins! " if leftScore > 4 else "Player 2 Wins! "
+        if lScore > 4 or rScore > 4:
+            winText = "Player 1 Wins! " if lScore > 4 else "Player 2 Wins! "
             textSurface = winFont.render(winText, False, WHITE, (0,0,0))
             textRect = textSurface.get_rect()
             textRect.center = ((screenWidth/2), screenHeight/2)
@@ -117,11 +117,11 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
             # If the ball makes it past the edge of the screen, update score, etc.
             if ball.rect.x > screenWidth:
-                leftScore += 1
+                lScore += 1
                 pointSound.play()
                 ball.reset(nowGoing="left")
             elif ball.rect.x < 0:
-                rightScore += 1
+                rScore += 1
                 pointSound.play()
                 ball.reset(nowGoing="right")
 
@@ -151,7 +151,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
         pygame.draw.rect(screen, WHITE, topWall)
         pygame.draw.rect(screen, WHITE, bottomWall)
-        updateScore(leftScore, rightScore, screen, WHITE, scoreFont)
+        updateScore(lScore, rScore, screen, WHITE, scoreFont)
         pygame.display.flip()
         clock.tick(60)
 
@@ -185,8 +185,8 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         ball.rect.y = jsonData['ball'][1]
 
         # Update  scores
-        leftScore = jsonData['score'][0]
-        rightScore = jsonData['score'][1]
+        lScore = jsonData['score'][0]
+        rScore = jsonData['score'][1]
 
         # =========================================================================================
 
