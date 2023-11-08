@@ -83,13 +83,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
 
-        data = {'sync': sync,   # Assemble the Json dictionary
-            'paddle': [playerPaddleObj.rect.x, playerPaddleObj.rect.y],
-            'ball': [ball.rect.x, ball.rect.y],
-            'score': [lScore, rScore]}
-
-        jsonData = json.dumps(data) # Dump the data
-        client.send(jsonData.encode()) # Send the data
+     
 
 
         # =========================================================================================
@@ -237,12 +231,7 @@ def startScreen():
     app = tk.Tk()
     app.title("Server Info")
 
-    script_directory = os.path.dirname(__file__)
-
-    # Define the relative path to the image file
-    relative_image_path = os.path.join("assets", "images", "logo.png")
-    image_path = os.path.join(script_directory, relative_image_path)
-
+   
 
 
     image = tk.PhotoImage(file="./assets/images/logo.png")
