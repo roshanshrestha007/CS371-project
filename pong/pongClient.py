@@ -10,7 +10,8 @@ import pygame
 import tkinter as tk
 import sys
 import socket
-
+import json
+import time
 from assets.code.helperCode import *
 
 # This is the main game loop.  For the most part, you will not need to modify this.  The sections
@@ -83,19 +84,25 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
 
-        # Create a JSON dictionary with game data
-        data = {
-            'sync': sync,  # Synchronization value
-            'paddle': [playerPaddleObj.rect.x, playerPaddleObj.rect.y],  # Paddle position [x, y]
-            'ball': [ball.rect.x, ball.rect.y],  # Ball position [x, y]
-            'score': [lScore, rScore]  # Scores for left and right players
-        }
+        try:
+            paddleData = {
+                'sync': sync,  # Synchronization value
+                'x_position': playerPaddleObj.rect.x,
+                'y_position': playerPaddleObj.rect.y,  
 
-        # Serialize the data to a JSON-formatted string
-        jsonData = json.dumps(data)
+                'ball': [ball.rect.x, ball.rect.y],  # Ball position [x, y]
+                'score': [lScore, rScore],  # Scores for left and right players
+                'request': "paddleUpdate",
+            }
 
-        # Send the serialized data to the server
-        client.send(jsonData.encode())
+            # Serialize the data to a JSON-formatted string
+            jsonData = json.dumps(paddleData)
+
+            # Send the serialized data to the server
+            client.sendall(jsonData.encode('utf-8'))
+        except Exception as e:
+            error_message = f"Error in sending data: {e}"
+            print(error_message)
 
 
 
@@ -171,36 +178,31 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # opponent's game
 
         
-        getInfoOpponent = {
+        
+
+        try:
+            getInfoOpponent = {
             "request": "getPaddleOpponent"
-        }
+            }
 
+            request_data = json.dumps(getInfoOpponent)
 
-        request_data = json.dumps(getInfoOpponent)
+            client.sendall(request_data.encode('utf-8'))
 
-        client.send(request_data.encode())
+            data = client.recv(1024)
+            # Deserialize the response data to a Python dictionary
+            server_response = json.loads(data.decode('utf-8'))
 
-        response_data = client.recv(1024)
+            # Extract the opponent's paddle position from the response
+            opponent_paddle_pos = server_response.get("oppo_paddle_pos", "Unknown")
 
+            if opponent_paddle_pos != "Unknown":
+                opponentPaddleObj.rect.y = opponent_paddle_pos
 
-        response_dict = json.loads(response_data.decode())
-
-        # Deserialize the response data to a Python dictionary
-        response_dict = json.loads(response_data.decode('utf-8'))
-
-        # Extract the opponent's paddle position from the response
-        opponent_paddle_pos = response_dict.get("opponent_y", "Unknown")
-
-        # Check if the opponent's paddle position is known
-        if opponent_paddle_pos != "Unknown":
-            # Update the local representation of the opponent's paddle position
-            opponentPaddleObj.rect.y = opponent_paddle_pos
-        else:
-            # Handle the case where the opponent's paddle position is unknown
-            errText = f"Error in receiving opponent paddle info! Unknown position"
-            textSurface = winFont.render(errText, False, (255, 0, 0), (0, 0, 0))
-            textRect = textSurface.get_rect()
-            textRect.center = ((screenWidth / 2), screenHeight / 2)
+        except Exception as e:
+            errText = f"Error in receiving opponent paddle info! {e}"
+            textSurface = winFont.render(errText, False, (255, 0, 0), (0,0,0))
+            
         # =========================================================================================
 
 
@@ -210,7 +212,12 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 # the screen width, height and player paddle (either "left" or "right")
 # If you want to hard code the screen's dimensions into the code, that's fine, but you will need to know
 # which client is which
-def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
+
+waiting_for_opponent = False  # Global flag to indicate if the client is waiting
+game_started = False  # Global flag to indicate if the game has started
+
+
+def joinServer(ipEntry:str, portEntry:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # Purpose:      This method is fired when the join button is clicked
     # Arguments:
     # ip            A string holding the IP address of the server
@@ -220,24 +227,46 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
 
     # Create a socket and connect to the server
     # You don't have to use SOCK_STREAM, use what you think is best
+    global waiting_for_opponent
+    global game_started
+
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(("127.0.0.1", port))
+    client.connect((ipEntry, int(portEntry)))
 
 
-
-    # Get the required information from your server (screen width, height & player paddle, "left or "right)
-    recieved = client.recv(1024)
-    data = recieved.decode()
-    jsonData = json.loads(data)
-
-    side = jsonData['side']
-    screenHeight = jsonData['height']
-    screenWidth = jsonData['width']
-
-    # If you have messages you'd like to show the user use the errorLabel widget like so
-    errorLabel.config(text=f"Some update text. You input: IP: {ip}, Port: {port}")
-    # You may or may not need to call this, depending on how many times you update the label
+    errorLabel.config(text="Waiting for another player to join . . .")
     errorLabel.update()
+
+
+
+             
+    while True:
+        if game_started:
+            break
+
+        #Get game parameters
+        info = { "request": "get_game_parameters" }
+        client.sendall(json.dumps(info).encode('utf-8'))
+
+
+        received = client.recv(1024)
+        data = received.decode('utf-8')
+        jsonData = json.loads(data)
+
+
+        side = jsonData.get("paddle_position", None)
+        screenHeight = jsonData['screen_height']
+        screenWidth = jsonData['screen_width']
+
+        if jsonData.get("paddle_position", None) is not None:
+            waiting_for_opponent = False
+            game_started = True
+            break
+
+        time.sleep(1)  
+    print(f"Received request from server: {data}")
+
+    #client.close()
 
     # Close this window and start the game with the info passed to you from the server
     app.withdraw()     # Hides the window (we'll kill it later)
@@ -249,14 +278,6 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
 def startScreen():
     app = tk.Tk()
     app.title("Server Info")
-
-    script_directory = os.path.dirname(__file__)
-
-    # Define the relative path to the image file
-    relative_image_path = os.path.join("assets", "images", "logo.png")
-    image_path = os.path.join(script_directory, relative_image_path)
-
-
 
     image = tk.PhotoImage(file="./assets/images/logo.png")
 
@@ -280,6 +301,22 @@ def startScreen():
 
     joinButton = tk.Button(text="Join", command=lambda: joinServer(ipEntry.get(), portEntry.get(), errorLabel, app))
     joinButton.grid(column=0, row=3, columnspan=2)
+
+    waiting_label = tk.Label(text="Waiting for Opponent to Join...", fg="blue")
+    waiting_label.grid(column=0, row=4, columnspan=2)
+    waiting_label.grid_remove()  # Hide the label initially
+
+    while True:
+        if waiting_for_opponent:
+            joinButton.config(state="disabled")
+            waiting_label.grid()
+        else:
+            joinButton.config(state="normal")
+            waiting_label.grid_remove()
+
+        app.update()
+        if game_started:
+            break
 
     app.mainloop()
 
