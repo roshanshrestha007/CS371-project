@@ -3,7 +3,7 @@ Contact Info
 
 Group Members & Email Addresses:
 
-    Person 1, person1@uky.edu
+    Roshan Shrestha, rsh251@uky.edu
     Person 2, person2@uky.edu
 
 Versioning
