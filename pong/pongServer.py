@@ -35,6 +35,7 @@ def handleClient(client_socket):
 
             print(f"Received request from client: {client_request}")
 
+
             if client_request["request"] == "get_game_parameters":
                 # Respond with game parameters like screen dimensions and paddle position.
                 response = {
@@ -48,6 +49,13 @@ def handleClient(client_socket):
                 # Update the y-position of player 1's paddle.
                 paddlePos['firstPlayer']['y_position'] = int(client_request['y_position'])
                 
+
+def startServer(ip: str, port, errorLabel:tk.Label, app:tk.Tk) -> None:
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((ip, port))
+    # do .listen()
+    # https://realpython.com/python-sockets/#echo-client-and-server
+
 
             elif client_request["request"] == "getPaddleOpponent":
                 # Respond with the y-position of player 2's paddle.
