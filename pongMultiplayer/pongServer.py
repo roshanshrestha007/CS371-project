@@ -16,7 +16,10 @@ import json
 # I suggest you use the sync variable in pongClient.py to determine how out of sync your two
 # clients are and take actions to resync the games
 
-#
+# Author: Roshan Shrestha
+# Purpose: This function is to handle communication with client
+
+
 # Function to handle communication with a single client.
 def handleClient(client_socket):
     global paddlePos
@@ -57,7 +60,7 @@ def handleClient(client_socket):
                 client_socket.sendall(json.dumps(response).encode('utf-8'))
 
             
-
+            
         
 
     except Exception as e:
