@@ -227,7 +227,7 @@ def joinServer(ipEntry:str, portEntry:str, errorLabel:tk.Label, app:tk.Tk) -> No
 
     # Create a socket and connect to the server
     # You don't have to use SOCK_STREAM, use what you think is best
-    # global waiting_for_opponent
+    global waiting_for_opponent
     # waiting_for_opponent = True
     global game_started
 
@@ -235,23 +235,56 @@ def joinServer(ipEntry:str, portEntry:str, errorLabel:tk.Label, app:tk.Tk) -> No
     client.connect((ipEntry, int(portEntry)))
 
 
+    errorLabel.config(text="Waiting for another player to join . . .")
+    errorLabel.update()
 
 
 
+             
+    while True:
+        if game_started:
+            break
+
+        #Get game parameters
+        info = { "request": "get_game_parameters" }
+        client.sendall(json.dumps(info).encode('utf-8'))
 
 
-    received = client.recv(1024)
-    data = received.decode('utf-8')
-    jsonData = json.loads(data)
+        received = client.recv(1024)
+        data = received.decode('utf-8')
+        jsonData = json.loads(data)
 
 
-    side = jsonData.get("paddle_position", None)
-    screenHeight = jsonData.get("screen_height",500)
-    screenWidth = jsonData.get("screen_width",300)
+        side = jsonData.get("paddle_position", None)
+        screenHeight = jsonData.get("screen_height",500)
+        screenWidth = jsonData.get("screen_width",300)
 
-    errorLabel.config(text=f"Unable to connect to server: IP: {ipEntry}, Port: {portEntry}")
-    errorLabel.update()     
-    errorLabel.config(text="Waiting for other player...")
+        if jsonData.get("paddle_position", None) is not None:
+            waiting_for_opponent = False
+            game_started = True
+            break
+
+        time.sleep(1)  
+    print(f"Received request from server: {data}")
+
+
+    while True:
+        received_data = client.recv(1024)
+        if not received_data:
+            break
+
+    decoded_data = received_data.decode('utf-8')
+    server_message = json.loads(decoded_data)
+
+    # Check if the server sent a 'start_game' message
+    if server_message.get('request') == 'start_game':
+        print("Received start_game message. Starting the game.")
+        print(f"We are here: ********* ")
+        waiting_for_opponent
+        game_started = True
+
+
+    #client.close()
 
     # Close this window and start the game with the info passed to you from the server
     app.withdraw()     # Hides the window (we'll kill it later)

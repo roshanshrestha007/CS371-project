@@ -89,7 +89,6 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 'sync': sync,  # Synchronization value
                 'x_position': playerPaddleObj.rect.x,
                 'y_position': playerPaddleObj.rect.y,  
-
                 'ball': [ball.rect.x, ball.rect.y],  # Ball position [x, y]
                 'score': [lScore, rScore],  # Scores for left and right players
                 'request': "paddleUpdate",
@@ -202,7 +201,9 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         except Exception as e:
             errText = f"Error in receiving opponent paddle info! {e}"
             textSurface = winFont.render(errText, False, (255, 0, 0), (0,0,0))
-            
+        
+
+
         # =========================================================================================
 
 
@@ -318,6 +319,7 @@ def startScreen():
         if game_started:
             break
 
+    
     app.mainloop()
 
 if __name__ == "__main__":

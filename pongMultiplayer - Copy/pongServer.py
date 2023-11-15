@@ -49,7 +49,7 @@ def handleClient(client_socket, clientNumber):
                     response = {
                         'screen_width': 600,
                         'screen_height': 400,
-                        'paddle_position': 'left'
+                        'paddle_position': 'right'
                     }
                 else:
                     print(f"Unexpected client number {clientNumber}")
@@ -97,7 +97,7 @@ num_clients_expected = 2
 noOfClients = 0
 
 # 
-while True:
+for _ in range(num_clients_expected):
     # Accept a new client connection.
     client_socket, client_address = server.accept()
     noOfClients += 1
@@ -106,12 +106,13 @@ while True:
     if noOfClients == num_clients_expected:
         # Send a start game message when the expected number of clients are connected.
         print(f"We are here: ********* ")
+
         start_message = {'request': 'start_game'}
         for client in [client_socket]:
             client.sendall(json.dumps(start_message).encode('utf-8'))
 
     # Create a thread to handle communication with the client.
-    client_thread = threading.Thread(target=handleClient, args=(client_socket, noOfClients))
+        client_thread = threading.Thread(target=handleClient, args=(client_socket, noOfClients))
     #client2_thread = threading.Thread(target=handleClient, args=(client_socket,))
-    client_thread.start()
+        client_thread.start()
     #client2_thread.start()

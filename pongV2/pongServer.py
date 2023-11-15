@@ -20,7 +20,6 @@ import json
 # Purpose: This function is to handle communication with client
 
 
-# Function to handle communication with a single client.
 def handleClient(client_socket):
     global paddlePos
     global noOfClients
@@ -48,12 +47,10 @@ def handleClient(client_socket):
                 client_socket.sendall(json.dumps(response).encode('utf-8'))
             
             elif client_request["request"] == "paddleUpdate":
-                # Update the y-position of player 1's paddle.
                 paddlePos['firstPlayer']['y_position'] = int(client_request['y_position'])
                 
 
             elif client_request["request"] == "getPaddleOpponent":
-                # Respond with the y-position of player 2's paddle.
                 response = {
                     'oppo_paddle_pos': paddlePos['secondPlayer']['y_position']
                 }
@@ -72,7 +69,7 @@ def handleClient(client_socket):
 # Initialize the game state to store paddle positions.
 paddlePos = {
     'firstPlayer': {'y_position': 0},
-    'secondPlayer': {'y_position': 0}
+    'secondPlayer': {'y_position': 30}
 }
 
 # Create a socket to listen for incoming connections.
