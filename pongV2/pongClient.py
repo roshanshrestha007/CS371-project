@@ -1,6 +1,6 @@
 # =================================================================================================
-# Contributing Authors:	    Roshan Shrestha
-# Email Addresses:          rsh251@uky.edu
+# Contributing Authors:	    Roshan Shrestha & David Webster
+# Email Addresses:          rsh251@uky.edu dwe245@uky.edu
 # Date:                     11/03/20
 # Purpose:                  To handle the client side of the game
 # Misc:                     <Not Required.  Anything else you might want to include>
@@ -216,6 +216,12 @@ def joinServer(ipEntry:str, portEntry:str, errorLabel:tk.Label, app:tk.Tk) -> No
     # You don't have to use SOCK_STREAM, use what you think is best
     global waiting_for_opponent
     global game_started
+    
+    if ipEntry == '':
+        ipEntry = "127.0.0.1"
+    if portEntry == '':
+        portEntry = "9999"
+
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect((ipEntry, int(portEntry)))

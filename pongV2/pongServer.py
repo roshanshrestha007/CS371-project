@@ -1,6 +1,6 @@
 # =================================================================================================
-# Contributing Authors:	    Roshan Shrestha
-# Email Addresses:          rsh251@uky.edu
+# Contributing Authors:	    Roshan Shrestha & David Webster
+# Email Addresses:          rsh251@uky.edu dwe245@uky.edu
 # Date:                     11/08/2023
 # Purpose:                  Server side of the game
 # =================================================================================================
