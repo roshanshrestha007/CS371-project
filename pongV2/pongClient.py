@@ -14,6 +14,11 @@ import json
 import time
 from assets.code.helperCode import *
 
+def acknowledge(client:socket.socket):
+    data = {"ack": 'surething'}
+    jsonData = json.dumps(data)
+    client.sendall(jsonData.encode('utf-8'))
+
 # This is the main game loop.  For the most part, you will not need to modify this.  The sections
 # where you should add to the code are marked.  Feel free to change any part of this project
 # to suit your needs.
@@ -26,7 +31,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
     # Constants
     WHITE = (255,255,255)
     clock = pygame.time.Clock()
-    scoreFont = pygame.font.Font("./assets/fonts/pong-score.ttf", 32)
+    scoreFont = pygame.font.Font("./assets/fonts/pong-score.ttf", 10)
     winFont = pygame.font.Font("./assets/fonts/visitor.ttf", 48)
     pointSound = pygame.mixer.Sound("./assets/sounds/point.wav")
     bounceSound = pygame.mixer.Sound("./assets/sounds/bounce.wav")
@@ -48,7 +53,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
     ball = Ball(pygame.Rect(screenWidth/2, screenHeight/2, 5, 5), -5, 0)
 
-    if playerPaddle == "left":
+    if playerPaddle == "l":
         opponentPaddleObj = rightPaddle
         playerPaddleObj = leftPaddle
     else:
@@ -63,6 +68,97 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
     while True:
         # Wiping the screen
         screen.fill((0,0,0))
+        
+        # WAIT FOR THE SERVER TO SEND US A COMMAND....
+        while True:
+            data = client.recv(1024)
+            cmd = json.loads(data.decode('utf-8'))
+            
+            if cmd['command'] == 'send_me_paddle_data':
+                paddleData = {
+                    'y': playerPaddleObj.rect.y,  
+                    'ball': [ball.rect.x, ball.rect.y],  # Ball position [x, y]
+                    'score': [lScore, rScore],  # Scores for left and right players
+                }
+                jsonData = json.dumps(paddleData)
+                client.sendall(jsonData.encode('utf-8'))
+            elif cmd['command'] == 'UPDATE_TIME':
+                lscore = cmd['score'][0]
+                rscore = cmd['score'][1]
+                ball.rect.x = cmd['ball'][0]
+                ball.rect.y = cmd['ball'][1]
+                opponentPaddleObj.rect.y = cmd['enemys_y']
+                # todo: ack
+                acknowledge(client)
+            elif cmd['command'] == 'youwin':
+                textSurface = winFont.render("LEGENDARY GAMER!!!!", False, WHITE, (0,0,0))
+                textRect = textSurface.get_rect()
+                textRect.center = ((screenWidth/2), screenHeight/2)
+                screen.blit(textSurface, textRect)
+                while True:
+                    pygame.display.flip()
+                    clock.tick(60)
+            elif cmd['command'] == 'youlose':
+                textSurface = winFont.render("DRINK MORE GAMER JUICE NEXT TIME", False, WHITE, (0,0,0))
+                textRect = textSurface.get_rect()
+                textRect.center = ((screenWidth/2), screenHeight/2)
+                screen.blit(textSurface, textRect)
+                while True:
+                    pygame.display.flip()
+                    clock.tick(60)
+            elif cmd['command'] == 'justgo':
+                acknowledge(client)
+                break
+        
+        # old code...
+#         if False:
+#             try:
+#                 paddleData = {
+#                     'sync': sync,  # Synchronization value
+#                     'x_position': playerPaddleObj.rect.x,
+#                     'y': playerPaddleObj.rect.y,  
+# 
+#                     'ball': [ball.rect.x, ball.rect.y],  # Ball position [x, y]
+#                     'score': [lScore, rScore],  # Scores for left and right players
+#                     'request': "paddleUpdate",
+#                 }
+# 
+#                 # Serialize the data to a JSON-formatted string
+#                 jsonData = json.dumps(paddleData)
+# 
+#                 # Send the serialized data to the server
+#                 client.sendall(jsonData.encode('utf-8'))
+#                 
+#         
+#             except Exception as e:
+#                 error_message = f"Error in sending data: {e}"
+#                 print(error_message)
+# 
+#             
+#             try:
+#                 getInfoOpponent = {
+#                 "request": "getPaddleOpponent"
+#                 }
+# 
+#                 request_data = json.dumps(getInfoOpponent)
+# 
+#                 client.sendall(request_data.encode('utf-8'))
+# 
+#                 data = client.recv(1024)
+#                 # Deserialize the response data to a Python dictionary
+#                 server_response = json.loads(data.decode('utf-8'))
+# 
+#                 # Extract the opponent's paddle position from the response
+#                 opponent_paddle_pos = server_response.get("oppo_paddle_pos", "Unknown")
+# 
+#                 if opponent_paddle_pos != "Unknown":
+#                     opponentPaddleObj.rect.y = opponent_paddle_pos
+# 
+#             except Exception as e:
+#                 errText = f"Error in receiving opponent paddle info! {e}"
+#                 textSurface = winFont.render(errText, False, (255, 0, 0), (0,0,0))
+            
+        
 
         # Getting keypress events
         for event in pygame.event.get():
@@ -84,25 +180,6 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
 
-        try:
-            paddleData = {
-                'sync': sync,  # Synchronization value
-                'x_position': playerPaddleObj.rect.x,
-                'y': playerPaddleObj.rect.y,  
-
-                'ball': [ball.rect.x, ball.rect.y],  # Ball position [x, y]
-                'score': [lScore, rScore],  # Scores for left and right players
-                'request': "paddleUpdate",
-            }
-
-            # Serialize the data to a JSON-formatted string
-            jsonData = json.dumps(paddleData)
-
-            # Send the serialized data to the server
-            client.sendall(jsonData.encode('utf-8'))
-        except Exception as e:
-            error_message = f"Error in sending data: {e}"
-            print(error_message)
 
 
 
@@ -118,41 +195,41 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                     paddle.rect.y -= paddle.speed
 
         # If the game is over, display the win message
-        if lScore > 4 or rScore > 4:
-            winText = "Player 1 Wins! " if lScore > 4 else "Player 2 Wins! "
-            textSurface = winFont.render(winText, False, WHITE, (0,0,0))
-            textRect = textSurface.get_rect()
-            textRect.center = ((screenWidth/2), screenHeight/2)
-            screen.blit(textSurface, textRect)
-        else:
+        # if lScore > 4 or rScore > 4:
+        #     winText = "Player 1 Wins! " if lScore > 4 else "Player 2 Wins! "
+        #     textSurface = winFont.render(winText, False, WHITE, (0,0,0))
+        #     textRect = textSurface.get_rect()
+        #     textRect.center = ((screenWidth/2), screenHeight/2)
+        #     screen.blit(textSurface, textRect)
+        # else:
 
-            # ==== Ball Logic =====================================================================
-            ball.updatePos()
+        # ==== Ball Logic =====================================================================
+        ball.updatePos()
 
-            # If the ball makes it past the edge of the screen, update score, etc.
-            if ball.rect.x > screenWidth:
-                lScore += 1
-                pointSound.play()
-                ball.reset(nowGoing="left")
-            elif ball.rect.x < 0:
-                rScore += 1
-                pointSound.play()
-                ball.reset(nowGoing="right")
+        # If the ball makes it past the edge of the screen, update score, etc.
+        if ball.rect.x > screenWidth:
+            lScore += 1
+            pointSound.play()
+            ball.reset(nowGoing="left")
+        elif ball.rect.x < 0:
+            rScore += 1
+            pointSound.play()
+            ball.reset(nowGoing="right")
 
-            # If the ball hits a paddle
-            if ball.rect.colliderect(playerPaddleObj.rect):
-                bounceSound.play()
-                ball.hitPaddle(playerPaddleObj.rect.center[1])
-            elif ball.rect.colliderect(opponentPaddleObj.rect):
-                bounceSound.play()
-                ball.hitPaddle(opponentPaddleObj.rect.center[1])
+        # If the ball hits a paddle
+        if ball.rect.colliderect(playerPaddleObj.rect):
+            bounceSound.play()
+            ball.hitPaddle(playerPaddleObj.rect.center[1])
+        elif ball.rect.colliderect(opponentPaddleObj.rect):
+            bounceSound.play()
+            ball.hitPaddle(opponentPaddleObj.rect.center[1])
 
-            # If the ball hits a wall
-            if ball.rect.colliderect(topWall) or ball.rect.colliderect(bottomWall):
-                bounceSound.play()
-                ball.hitWall()
+        # If the ball hits a wall
+        if ball.rect.colliderect(topWall) or ball.rect.colliderect(bottomWall):
+            bounceSound.play()
+            ball.hitWall()
 
-            pygame.draw.rect(screen, WHITE, ball)
+        pygame.draw.rect(screen, WHITE, ball)
             # ==== End Ball Logic =================================================================
 
         # Drawing the dotted line in the center
@@ -180,29 +257,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         
         
 
-        try:
-            getInfoOpponent = {
-            "request": "getPaddleOpponent"
-            }
 
-            request_data = json.dumps(getInfoOpponent)
-
-            client.sendall(request_data.encode('utf-8'))
-
-            data = client.recv(1024)
-            # Deserialize the response data to a Python dictionary
-            server_response = json.loads(data.decode('utf-8'))
-
-            # Extract the opponent's paddle position from the response
-            opponent_paddle_pos = server_response.get("oppo_paddle_pos", "Unknown")
-
-            if opponent_paddle_pos != "Unknown":
-                opponentPaddleObj.rect.y = opponent_paddle_pos
-
-        except Exception as e:
-            errText = f"Error in receiving opponent paddle info! {e}"
-            textSurface = winFont.render(errText, False, (255, 0, 0), (0,0,0))
-            
         # =========================================================================================
 
 
@@ -240,15 +295,12 @@ def joinServer(ipEntry:str, portEntry:str, errorLabel:tk.Label, app:tk.Tk) -> No
     
     screenWidth = 0
     screenHeight = 0
-    haveGottenGameParams = 0
-    info = { "request": "get_game_parameters" }
-    client.sendall(json.dumps(info).encode('utf-8'))
     side = 0
 
 
              
     while True:
-        #1 receive from server
+        #1 receive command from server
         received = client.recv(1024)
         data = received.decode('utf-8')
         jsonData = json.loads(data)
@@ -258,12 +310,14 @@ def joinServer(ipEntry:str, portEntry:str, errorLabel:tk.Label, app:tk.Tk) -> No
 
         # Huh?
         if jsonData['command'] == 'game_parameters':
-            side = jsonData.get("paddle_position", None)
+            side = jsonData.get("whoami", None)
             screenHeight = jsonData['screen_height']
             screenWidth = jsonData['screen_width']
+            acknowledge(client)
         elif jsonData['command'] == 'start_game':
             waiting_for_opponent = False
             game_started = True
+            acknowledge(client)
             break
         time.sleep(1)  
     print(f"Received request from server: {data}")
