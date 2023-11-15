@@ -88,7 +88,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
             paddleData = {
                 'sync': sync,  # Synchronization value
                 'x_position': playerPaddleObj.rect.x,
-                'y_position': playerPaddleObj.rect.y,  
+                'y': playerPaddleObj.rect.y,  
 
                 'ball': [ball.rect.x, ball.rect.y],  # Ball position [x, y]
                 'score': [lScore, rScore],  # Scores for left and right players
@@ -236,33 +236,35 @@ def joinServer(ipEntry:str, portEntry:str, errorLabel:tk.Label, app:tk.Tk) -> No
 
     errorLabel.config(text="Waiting for another player to join . . .")
     errorLabel.update()
-
+    
+    
+    screenWidth = 0
+    screenHeight = 0
+    haveGottenGameParams = 0
+    info = { "request": "get_game_parameters" }
+    client.sendall(json.dumps(info).encode('utf-8'))
+    side = 0
 
 
              
     while True:
-        if game_started:
-            break
-
-        #Get game parameters
-        info = { "request": "get_game_parameters" }
-        client.sendall(json.dumps(info).encode('utf-8'))
-
-
+        #1 receive from server
         received = client.recv(1024)
         data = received.decode('utf-8')
         jsonData = json.loads(data)
 
 
-        side = jsonData.get("paddle_position", None)
-        screenHeight = jsonData['screen_height']
-        screenWidth = jsonData['screen_width']
+        #Get game parameters
 
-        if jsonData.get("paddle_position", None) is not None:
+        # Huh?
+        if jsonData['command'] == 'game_parameters':
+            side = jsonData.get("paddle_position", None)
+            screenHeight = jsonData['screen_height']
+            screenWidth = jsonData['screen_width']
+        elif jsonData['command'] == 'start_game':
             waiting_for_opponent = False
             game_started = True
             break
-
         time.sleep(1)  
     print(f"Received request from server: {data}")
 
