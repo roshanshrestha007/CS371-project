@@ -31,8 +31,8 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
     # Constants
     WHITE = (255,255,255)
     clock = pygame.time.Clock()
-    scoreFont = pygame.font.Font("./assets/fonts/pong-score.ttf", 10)
-    winFont = pygame.font.Font("./assets/fonts/visitor.ttf", 48)
+    scoreFont = pygame.font.Font("./assets/fonts/pong-score.ttf", 32)
+    winFont = pygame.font.Font("./assets/fonts/visitor.ttf", 20)
     pointSound = pygame.mixer.Sound("./assets/sounds/point.wav")
     bounceSound = pygame.mixer.Sound("./assets/sounds/bounce.wav")
 
@@ -63,8 +63,6 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
     lScore = 0
     rScore = 0
 
-    sync = 0
-
     while True:
         # Wiping the screen
         screen.fill((0,0,0))
@@ -91,7 +89,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 # todo: ack
                 acknowledge(client)
             elif cmd['command'] == 'youwin':
-                textSurface = winFont.render("LEGENDARY GAMER!!!!", False, WHITE, (0,0,0))
+                textSurface = winFont.render("bro you won", False, WHITE, (0,0,0))
                 textRect = textSurface.get_rect()
                 textRect.center = ((screenWidth/2), screenHeight/2)
                 screen.blit(textSurface, textRect)
@@ -99,7 +97,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                     pygame.display.flip()
                     clock.tick(60)
             elif cmd['command'] == 'youlose':
-                textSurface = winFont.render("DRINK MORE GAMER JUICE NEXT TIME", False, WHITE, (0,0,0))
+                textSurface = winFont.render("step it up bro", False, WHITE, (0,0,0))
                 textRect = textSurface.get_rect()
                 textRect.center = ((screenWidth/2), screenHeight/2)
                 screen.blit(textSurface, textRect)
@@ -109,55 +107,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
             elif cmd['command'] == 'justgo':
                 acknowledge(client)
                 break
-        
-        # old code...
-#         if False:
-#             try:
-#                 paddleData = {
-#                     'sync': sync,  # Synchronization value
-#                     'x_position': playerPaddleObj.rect.x,
-#                     'y': playerPaddleObj.rect.y,  
-# 
-#                     'ball': [ball.rect.x, ball.rect.y],  # Ball position [x, y]
-#                     'score': [lScore, rScore],  # Scores for left and right players
-#                     'request': "paddleUpdate",
-#                 }
-# 
-#                 # Serialize the data to a JSON-formatted string
-#                 jsonData = json.dumps(paddleData)
-# 
-#                 # Send the serialized data to the server
-#                 client.sendall(jsonData.encode('utf-8'))
-#                 
-#         
-#             except Exception as e:
-#                 error_message = f"Error in sending data: {e}"
-#                 print(error_message)
-# 
-#             
-#             try:
-#                 getInfoOpponent = {
-#                 "request": "getPaddleOpponent"
-#                 }
-# 
-#                 request_data = json.dumps(getInfoOpponent)
-# 
-#                 client.sendall(request_data.encode('utf-8'))
-# 
-#                 data = client.recv(1024)
-#                 # Deserialize the response data to a Python dictionary
-#                 server_response = json.loads(data.decode('utf-8'))
-# 
-#                 # Extract the opponent's paddle position from the response
-#                 opponent_paddle_pos = server_response.get("oppo_paddle_pos", "Unknown")
-# 
-#                 if opponent_paddle_pos != "Unknown":
-#                     opponentPaddleObj.rect.y = opponent_paddle_pos
-# 
-#             except Exception as e:
-#                 errText = f"Error in receiving opponent paddle info! {e}"
-#                 textSurface = winFont.render(errText, False, (255, 0, 0), (0,0,0))
-            
+
         
 
         # Getting keypress events
@@ -193,15 +143,6 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
             elif paddle.moving == "up":
                 if paddle.rect.topleft[1] > 10:
                     paddle.rect.y -= paddle.speed
-
-        # If the game is over, display the win message
-        # if lScore > 4 or rScore > 4:
-        #     winText = "Player 1 Wins! " if lScore > 4 else "Player 2 Wins! "
-        #     textSurface = winFont.render(winText, False, WHITE, (0,0,0))
-        #     textRect = textSurface.get_rect()
-        #     textRect.center = ((screenWidth/2), screenHeight/2)
-        #     screen.blit(textSurface, textRect)
-        # else:
 
         # ==== Ball Logic =====================================================================
         ball.updatePos()
@@ -245,16 +186,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         updateScore(lScore, rScore, screen, WHITE, scoreFont)
         pygame.display.flip()
         clock.tick(60)
-
-        # This number should be synchronized between you and your opponent.  If your number is larger
-        # then you are ahead of them in time, if theirs is larger, they are ahead of you, and you need to
-        # catch up (use their info)
-        sync += 1
-        # =========================================================================================
-        # Send your server update here at the end of the game loop to sync your game with your
-        # opponent's game
-
-        
+   
         
 
 
