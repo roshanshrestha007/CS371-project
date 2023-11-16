@@ -3,7 +3,6 @@
 # Email Addresses:          rsh251@uky.edu dwe245@uky.edu
 # Date:                     11/03/20
 # Purpose:                  To handle the client side of the game
-# Misc:                     <Not Required.  Anything else you might want to include>
 # =================================================================================================
 
 import pygame
