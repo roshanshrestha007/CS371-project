@@ -4,12 +4,13 @@ Contact Info
 Group Members & Email Addresses:
 
     Roshan Shrestha, rsh251@uky.edu
-    Person 2, person2@uky.edu
+    David Webster, dwe245@uky.edu
+    Nnaemeka Okafor,  
 
 Versioning
 ==========
 
-Github Link: 
+Github Link: https://github.com/roshanshrestha007/CS371-project
 
 General Info
 ============
@@ -22,8 +23,8 @@ Run the following line to install the required libraries for this project:
 
 `pip3 install -r requirements.txt`
 
+
+
 Known Bugs
 ==========
-- The server doesn't work because the logic isn't yet written.
-- The client doesn't speak to the server
 

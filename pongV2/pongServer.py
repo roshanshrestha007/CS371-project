@@ -1,7 +1,7 @@
 # =================================================================================================
 # Contributing Authors:	    Roshan Shrestha & David Webster
 # Email Addresses:          rsh251@uky.edu dwe245@uky.edu
-# Date:                     11/08/2023
+# Date:                     11/16/2023
 # Purpose:                  Server side of the game
 # =================================================================================================
 
@@ -17,9 +17,8 @@ import json
 # clients are and take actions to resync the games
 
 
-# Function to handle communication with a single client.
 
-noOfClients = 0
+#noOfClients = 0
 
 def receiveAck(client:socket.socket):
     received = client.recv(1024)
@@ -52,7 +51,7 @@ print(f"Server is listening at {actual_server_address[0]} and port: {actual_serv
 
 
 # Define the number of clients you expect to connect.
-num_clients_expected = 2
+#num_clients_expected = 2
 
 
 # Handle each client...
