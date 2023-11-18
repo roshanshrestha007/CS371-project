@@ -29,7 +29,7 @@ def receiveAck(client:socket.socket):
         raise Exception("THIS CLIENT IS DISOBEDIENT. IT DID NOT ACK ME")
     return
 
-#global state
+# Global state variables
 clients_configured = [0,0]
 scores = [0,0]
 paddle_positions = [0,0]
@@ -54,14 +54,12 @@ print(f"Server is listening at {actual_server_address[0]} and port: {actual_serv
 # Define the number of clients you expect to connect.
 num_clients_expected = 2
 
-# Track the number of connected clients.
 
-# handle each client...
-
-
+# Handle each client...
 client_socket1, client_address1 = server.accept()
 client_socket2, client_address2 = server.accept()
 
+# Send game parameters to clients
 cmd = {'command': 'game_parameters'}
 cmd['screen_width'] = 600
 cmd['screen_height'] = 400
@@ -71,20 +69,21 @@ client_socket1.sendall(json.dumps(cmd).encode('utf-8'))
 
 cmd['whoami'] = "r"
 client_socket2.sendall(json.dumps(cmd).encode('utf-8'))
-#retrieve an ACK from player 1....
+
+# Retrieve an ACK from player 1
 receiveAck(client_socket1)
+# Retrieve an ACK from player 2
 receiveAck(client_socket2)
 
-
+# Start the game
 cmd = {'command': 'start_game'}
-
-
 client_socket1.sendall(json.dumps(cmd).encode('utf-8'))
 client_socket2.sendall(json.dumps(cmd).encode('utf-8'))
 
-#we need to get acks for start_game...
+# Receive ACKs for start_game
 receiveAck(client_socket1)
 receiveAck(client_socket2)
+
 #We are now playing the game...
 while True:
     # Ask for paddle data...
@@ -126,9 +125,11 @@ while True:
     receiveAck(client_socket1)
     receiveAck(client_socket2)
     
+    # Check for a winner
     if scores[0] > 5 or scores[1] > 5:
         somebody_has_won = True
     
+    # Check for player 1 winning
     if scores[0] > 4:
         cmd = {'command' : 'youwin'}
         client_socket1.sendall(json.dumps(cmd).encode('utf-8'))
@@ -136,6 +137,7 @@ while True:
         client_socket2.sendall(json.dumps(cmd).encode('utf-8'))
         break
     
+    # Check for player 2 winning
     if scores[1] > 4:
         cmd = {'command' : 'youlose'}
         client_socket1.sendall(json.dumps(cmd).encode('utf-8'))
