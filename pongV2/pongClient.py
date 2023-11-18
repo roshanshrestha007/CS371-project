@@ -94,7 +94,9 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 screen.blit(textSurface, textRect)
                 while True:
                     pygame.display.flip()
-                    clock.tick(60)
+                    event = pygame.event.wait ()
+                        if event.type == pygame.QUIT:
+                            pygame.quit()
             elif cmd['command'] == 'youlose':
                 textSurface = winFont.render("step it up bro", False, WHITE, (0,0,0))
                 textRect = textSurface.get_rect()
@@ -102,7 +104,9 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 screen.blit(textSurface, textRect)
                 while True:
                     pygame.display.flip()
-                    clock.tick(60)
+                    event = pygame.event.wait ()
+                        if event.type == pygame.QUIT:
+                            pygame.quit()
             elif cmd['command'] == 'justgo':
                 acknowledge(client)
                 break
