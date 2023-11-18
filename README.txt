@@ -5,7 +5,7 @@ Group Members & Email Addresses:
 
     Roshan Shrestha, rsh251@uky.edu
     David Webster, dwe245@uky.edu
-    Nnaemeka Okafor,  
+    Nnaemeka Okafor,  njok222@uky.edu
 
 Versioning
 ==========
